@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # InfluxDB - Time series database
+  influxdb:
+    image: influxdb:2.7
+    container_name: money_flow_influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=adminpassword
+      - DOCKER_INFLUXDB_INIT_ORG=money_flow
+      - DOCKER_INFLUXDB_INIT_BUCKET=market_data
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-super-secret-auth-token
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - money_flow_network
+
+  # Redis - Cache
+  redis:
+    image: redis:7-alpine
+    container_name: money_flow_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - money_flow_network
+
+  # FastAPI - API Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: money_flow_api
+    ports:
+      - "8000:8000"
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=my-super-secret-auth-token
+      - INFLUXDB_ORG=money_flow
+      - INFLUXDB_BUCKET=market_data
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - influxdb
+      - redis
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+    networks:
+      - money_flow_network
+    restart: unless-stopped
+
+  # Streamlit - Dashboard
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: money_flow_dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+    volumes:
+      - ./dashboard:/app/dashboard
+    networks:
+      - money_flow_network
+    restart: unless-stopped
+
+  # Data Collector - Background service
+  collector:
+    build:
+      context: .
+      dockerfile: Dockerfile.collector
+    container_name: money_flow_collector
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=my-super-secret-auth-token
+      - INFLUXDB_ORG=money_flow
+      - INFLUXDB_BUCKET=market_data
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - influxdb
+      - redis
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+    networks:
+      - money_flow_network
+    restart: unless-stopped
+
+volumes:
+  influxdb_data:
+  redis_data:
+
+networks:
+  money_flow_network:
+    driver: bridge

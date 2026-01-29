@@ -1,0 +1,182 @@
+# Application Settings
+app:
+  name: "Money Flow Prediction System"
+  version: "0.1.0"
+  environment: "development"  # development, staging, production
+  debug: true
+
+# Data Collection
+data_collection:
+  update_intervals:
+    realtime: 60  # seconds
+    daily: "16:00"  # market close time
+    weekly: "SAT 00:00"
+  
+  symbols:
+    etf_equity:
+      - "SPY"   # S&P 500
+      - "QQQ"   # Nasdaq
+      - "IWM"   # Russell 2000
+      - "DIA"   # Dow Jones
+    
+    etf_bonds:
+      - "TLT"   # 20+ Year Treasury
+      - "SHY"   # 1-3 Year Treasury
+      - "HYG"   # High Yield Corporate
+      - "LQD"   # Investment Grade Corporate
+      - "TIP"   # TIPS
+    
+    etf_sectors:
+      - "XLF"   # Financial
+      - "XLE"   # Energy
+      - "XLV"   # Healthcare
+      - "XLK"   # Technology
+      - "XLI"   # Industrial
+    
+    etf_international:
+      - "EWY"   # South Korea
+      - "EWJ"   # Japan
+      - "EEM"   # Emerging Markets
+      - "VWO"   # Vanguard Emerging Markets
+      - "EFA"   # EAFE
+    
+    forex:
+      - "DX-Y.NYB"    # Dollar Index
+      - "USDKRW=X"    # USD/KRW
+      - "USDJPY=X"    # USD/JPY
+      - "EURUSD=X"    # EUR/USD
+      - "AUDUSD=X"    # AUD/USD
+    
+    volatility:
+      - "^VIX"   # VIX Index
+      - "^MOVE"  # MOVE Index (if available)
+    
+    treasuries:
+      - "^IRX"   # 13 Week
+      - "^FVX"   # 5 Year
+      - "^TNX"   # 10 Year
+      - "^TYX"   # 30 Year
+
+# Analysis Settings
+analysis:
+  anomaly_detection:
+    z_score_threshold: 2.0
+    isolation_forest_contamination: 0.1
+    window_size: 100
+  
+  signal_generation:
+    korea_outflow:
+      rate_diff_threshold: -0.5  # percentage points
+      usdkrw_change_threshold: 1.0  # percent
+      ewy_flow_days: 3
+    
+    risk_off:
+      vix_threshold: 30
+      hyg_spread_threshold: 5.0  # percentage points
+    
+    liquidity_crisis:
+      libor_ois_threshold: 0.5
+      move_threshold: 150
+
+  risk_scoring:
+    weights:
+      market_volatility: 0.25
+      liquidity_risk: 0.25
+      credit_risk: 0.20
+      currency_risk: 0.20
+      geopolitical_risk: 0.10
+
+# Alert Settings
+alerts:
+  enabled: true
+  
+  severity_thresholds:
+    info: 0.0
+    warning: 0.4
+    critical: 0.6
+    emergency: 0.8
+  
+  channels:
+    slack:
+      enabled: true
+      min_severity: "warning"
+    
+    email:
+      enabled: true
+      min_severity: "critical"
+    
+    sms:
+      enabled: false
+      min_severity: "emergency"
+  
+  rate_limiting:
+    max_alerts_per_hour: 10
+    cooldown_minutes: 15
+
+# Database Settings
+database:
+  influxdb:
+    url: "http://localhost:8086"
+    org: "money_flow"
+    bucket: "market_data"
+    retention_days: 365
+  
+  redis:
+    host: "localhost"
+    port: 6379
+    db: 0
+    ttl_seconds: 3600
+
+# API Settings
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  cors_origins:
+    - "http://localhost:8501"  # Streamlit
+    - "http://localhost:3000"  # React (if needed)
+  
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 60
+
+# Dashboard Settings
+dashboard:
+  port: 8501
+  refresh_interval: 60  # seconds
+  max_data_points: 1000
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "json"  # json or text
+  file: "logs/money_flow.log"
+  rotation: "100 MB"
+  retention: "30 days"
+
+# Machine Learning
+ml:
+  models:
+    lstm:
+      enabled: true
+      sequence_length: 60
+      hidden_size: 128
+      num_layers: 2
+    
+    transformer:
+      enabled: false  # Phase 2
+      d_model: 256
+      nhead: 8
+      num_layers: 6
+  
+  training:
+    batch_size: 32
+    epochs: 100
+    learning_rate: 0.001
+    validation_split: 0.2
+  
+  prediction:
+    horizons:
+      - "24h"
+      - "48h"
+      - "1w"
