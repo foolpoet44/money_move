@@ -1,0 +1,204 @@
+# Firebase 프로젝트 설정
+firebase:
+  project_id: "your-project-id"  # Firebase 프로젝트 ID
+  credentials_path: null  # null이면 Application Default Credentials 사용
+  
+# Firestore 설정
+firestore:
+  # 컬렉션 이름
+  collections:
+    market_data: "market_data"
+    signals: "signals"
+    predictions: "predictions"
+    analytics: "analytics"
+    cache: "cache"
+    users: "users"
+  
+  # 데이터 보관 기간 (일)
+  retention_days: 30
+  
+  # 배치 크기
+  batch_size: 100
+  
+  # 캐시 TTL (초)
+  cache_ttl:
+    market_overview: 60      # 1분
+    etf_flow: 300            # 5분
+    predictions: 600         # 10분
+    analytics: 300           # 5분
+
+# Cloud Run 설정
+cloud_run:
+  dashboard:
+    service_name: "money-flow-dashboard"
+    region: "us-central1"
+    min_instances: 0
+    max_instances: 1
+    memory: "512Mi"
+    cpu: 1
+    timeout: 300
+    
+  api:
+    service_name: "money-flow-api"
+    region: "us-central1"
+    min_instances: 0
+    max_instances: 1
+    memory: "256Mi"
+    cpu: 1
+    timeout: 60
+
+# Cloud Scheduler 설정 (무료: 3개 작업)
+cloud_scheduler:
+  jobs:
+    # 주요 시장 데이터 수집 (5분마다)
+    - name: "collect-market-data"
+      schedule: "*/5 * * * *"  # Every 5 minutes
+      function: "collect_market_data"
+      timezone: "US/Eastern"
+    
+    # ETF 자금 흐름 수집 (10분마다)
+    - name: "collect-etf-flows"
+      schedule: "*/10 * * * *"  # Every 10 minutes
+      function: "collect_etf_flows"
+      timezone: "US/Eastern"
+    
+    # 데이터 정리 (매일 자정)
+    - name: "cleanup-old-data"
+      schedule: "0 0 * * *"  # Daily at midnight
+      function: "cleanup_old_data"
+      timezone: "US/Eastern"
+
+# 데이터 수집 설정 (무료 티어 최적화)
+data_collection:
+  update_intervals:
+    bonds: 600        # 10분 (기존: 60초)
+    forex: 300        # 5분 (기존: 30초)
+    etf: 600          # 10분 (기존: 300초)
+    derivatives: 300  # 5분 (기존: 60초)
+  
+  # API 요청 제한
+  rate_limits:
+    fred: 120         # requests per minute
+    yahoo: 2000       # requests per hour
+    alpha_vantage: 5  # requests per minute (free tier)
+  
+  retry_policy:
+    max_retries: 3
+    backoff_factor: 2
+    max_backoff: 60
+
+# Secret Manager 설정
+secret_manager:
+  enabled: true
+  secrets:
+    - name: "fred-api-key"
+      env_var: "FRED_API_KEY"
+    - name: "slack-webhook"
+      env_var: "SLACK_WEBHOOK_URL"
+    - name: "alpha-vantage-key"
+      env_var: "ALPHA_VANTAGE_API_KEY"
+
+# 알림 설정 (무료 티어 최적화)
+alerts:
+  enabled: true
+  
+  # 알림 빈도 제한 (비용 절감)
+  rate_limit: 5           # 시간당 최대 알림 수
+  cooldown_period: 1800   # 동일 알림 간 대기 시간 (초)
+  
+  # 심각도별 알림 채널
+  channels:
+    INFO:
+      - firestore  # Firestore에만 저장
+    WARNING:
+      - firestore
+      - slack
+    CRITICAL:
+      - firestore
+      - slack
+      - email
+    EMERGENCY:
+      - firestore
+      - slack
+      - email
+
+# 분석 설정
+analysis:
+  anomaly_detection:
+    z_score_threshold: 3.0
+    isolation_forest_contamination: 0.1
+    
+  prediction:
+    model_type: "ensemble"  # lstm, transformer, ensemble
+    horizon_default: "24h"
+    confidence_threshold: 0.7
+    
+    # 모델 재학습 주기
+    retrain_interval_days: 7
+    
+  # 시나리오 매칭
+  scenario_matching:
+    similarity_threshold: 0.75
+    max_historical_matches: 5
+
+# 성능 최적화
+performance:
+  # 캐싱 설정
+  cache_enabled: true
+  cache_backend: "firestore"  # firestore (Redis 대체)
+  
+  # 배치 작업
+  batch_size: 50
+  max_workers: 2  # 동시 실행 워커 수 감소 (비용 절감)
+  
+  # 쿼리 최적화
+  query_limit_default: 1000
+  pagination_size: 50
+
+# 로깅 설정
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "json"
+  
+  # Cloud Logging 통합
+  cloud_logging:
+    enabled: true
+    log_name: "money-flow"
+  
+  # 로그 보관 기간
+  retention_days: 7
+
+# 모니터링 설정
+monitoring:
+  # Cloud Monitoring 통합
+  enabled: true
+  
+  # 메트릭 수집
+  metrics:
+    - name: "api_requests"
+      type: "counter"
+    - name: "prediction_accuracy"
+      type: "gauge"
+    - name: "data_collection_latency"
+      type: "histogram"
+  
+  # 알림 임계값
+  thresholds:
+    error_rate: 0.05        # 5% 에러율
+    latency_p95: 2000       # 95th percentile 2초
+    memory_usage: 0.85      # 메모리 85% 사용
+
+# 무료 티어 사용량 제한
+free_tier_limits:
+  # 일일 쿼리 제한
+  daily_firestore_reads: 45000   # 50K 한도의 90%
+  daily_firestore_writes: 18000  # 20K 한도의 90%
+  
+  # Cloud Run 요청 제한
+  monthly_cloud_run_requests: 1800000  # 200만 한도의 90%
+  
+  # 데이터 저장 제한
+  max_storage_gb: 0.9  # 1GB 한도의 90%
+  
+  # 알림 발송 시 사용량 확인
+  check_limits_before_action: true

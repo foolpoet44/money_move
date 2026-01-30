@@ -1,0 +1,52 @@
+# Firebase
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+config/secrets.yaml
+*.log
+logs/
+.env
+.env.local
+
+# Data
+data/
+*.db
+*.sqlite
+
+# Docker
+docker-compose.yml
+Dockerfile*
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build
+build/
+dist/
+*.egg-info/

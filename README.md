@@ -146,8 +146,42 @@ Money Flow Prediction System은 글로벌 자금시장의 흐름을 실시간으
 - Python 3.10 이상
 - Docker & Docker Compose (선택사항, 권장)
 - Git
+- **Firebase CLI** (Firebase 배포용)
+- **Google Cloud SDK** (Firebase 배포용)
 
-### 1분 설치 (Docker 사용)
+### 🔥 Firebase 배포 (무료 티어, 권장)
+
+```bash
+# 1. 저장소 클론
+git clone https://github.com/your-username/money_move.git
+cd money_move
+
+# 2. Firebase 초기 설정
+./scripts/setup_firebase.sh
+# 프롬프트에 따라 Firebase 프로젝트 ID 입력
+
+# 3. API 키 설정
+cp config/secrets.yaml.example config/secrets.yaml
+# FRED API 키 입력 (https://fred.stlouisfed.org/)
+
+# 4. Firebase 배포
+./scripts/deploy_firebase.sh
+
+# 5. 배포 완료 후 URL 확인
+# https://YOUR_PROJECT_ID.web.app
+```
+
+> **🎯 Firebase 배포의 장점:**
+> - ✅ **완전 무료**: 무료 티어 범위 내에서 운영 가능
+> - ✅ **자동 스케일링**: 트래픽에 따라 자동 확장
+> - ✅ **HTTPS 기본 제공**: 별도 설정 없이 보안 연결
+> - ✅ **글로벌 CDN**: 전 세계 어디서나 빠른 접속
+> 
+> 자세한 설정 가이드는 [FIREBASE_SETUP.md](FIREBASE_SETUP.md)를 참조하세요.
+
+---
+
+### 1분 설치 (Docker 사용 - 로컬 개발용)
 
 ```bash
 # 1. 저장소 클론
@@ -194,6 +228,7 @@ python scripts/setup_db.py
 # 6. 대시보드 실행
 streamlit run dashboard/app.py
 ```
+
 
 ---
 
