@@ -37,6 +37,10 @@ config/secrets.yaml
 .env.local
 .env.*.local
 
+# Firebase service account (NEVER commit these!)
+*service-account*.json
+*firebase-adminsdk*.json
+
 # Logs
 logs/
 *.log

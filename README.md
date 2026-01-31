@@ -179,6 +179,34 @@ cp config/secrets.yaml.example config/secrets.yaml
 > 
 > 자세한 설정 가이드는 [FIREBASE_SETUP.md](FIREBASE_SETUP.md)를 참조하세요.
 
+### 🤖 GitHub Actions 자동 배포 (권장)
+
+GitHub Actions를 사용하면 코드 푸시만으로 자동 배포가 가능합니다!
+
+```bash
+# 1. GitHub 저장소에 코드 푸시
+git add .
+git commit -m "Setup Firebase deployment"
+git push origin main
+
+# 2. GitHub Actions에서 Firebase 서비스 계정 설정
+# (한 번만 설정하면 됨)
+
+# 3. main 브랜치에 푸시할 때마다 자동 배포!
+```
+
+**주요 기능:**
+- ✅ **자동 배포**: `main` 브랜치 푸시 시 자동 실행
+- ✅ **수동 트리거**: GitHub UI에서 언제든지 배포 가능
+- ✅ **자동 테스트**: PR 생성 시 테스트 자동 실행
+- ✅ **보안 관리**: API 키를 GitHub Secrets로 안전하게 보관
+
+> **📖 설정 가이드:**
+> - [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md) - GitHub Actions 설정 단계별 가이드
+> - Firebase 서비스 계정 생성 방법
+> - GitHub Secrets 설정 방법
+> - 배포 워크플로우 사용법
+
 ---
 
 ### 1분 설치 (Docker 사용 - 로컬 개발용)
