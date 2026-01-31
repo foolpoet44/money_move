@@ -1,138 +1,133 @@
 #!/bin/bash
 
-# Firebase 배포 스크립트 (무료 티어 최적화)
-# Money Flow Prediction System을 Firebase + Cloud Run에 배포합니다
+# Firebase 배포 스크립트
+# 로컬 환경에서 Firebase에 배포합니다
 
 set -e
 
+echo "🚀 Firebase 배포를 시작합니다..."
+
+# 컬러 출력
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 BLUE='\033[0;34m'
-NC='\033[0m'
+NC='\033[0m' # No Color
 
-success() { echo -e "${GREEN}✓ $1${NC}"; }
-warning() { echo -e "${YELLOW}⚠ $1${NC}"; }
-error() { echo -e "${RED}✗ $1${NC}"; exit 1; }
-info() { echo -e "${BLUE}ℹ $1${NC}"; }
+success() {
+    echo -e "${GREEN}✓ $1${NC}"
+}
 
-echo "🚀 Firebase 배포를 시작합니다..."
+warning() {
+    echo -e "${YELLOW}⚠ $1${NC}"
+}
+
+error() {
+    echo -e "${RED}✗ $1${NC}"
+    exit 1
+}
+
+info() {
+    echo -e "${BLUE}ℹ $1${NC}"
+}
 
 # 프로젝트 ID 가져오기
-PROJECT_ID=$(firebase use | grep "Now using project" | awk '{print $4}' | tr -d "'")
+PROJECT_ID=$(cat .firebaserc | grep -o '"default": "[^"]*' | grep -o '[^"]*$')
+
 if [ -z "$PROJECT_ID" ]; then
-    PROJECT_ID=$(cat .firebaserc | grep -o '"default"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
+    error "프로젝트 ID를 찾을 수 없습니다. .firebaserc 파일을 확인하세요."
 fi
 
 info "프로젝트 ID: $PROJECT_ID"
 
-# 1. 사전 검증
+# 1. Firebase 로그인 확인
 echo ""
-echo "📋 사전 검증 중..."
-
-# Firebase CLI 확인
-if ! command -v firebase &> /dev/null; then
-    error "Firebase CLI가 설치되어 있지 않습니다"
+echo "📝 Firebase 인증 확인 중..."
+if ! firebase projects:list &> /dev/null; then
+    warning "Firebase 로그인이 필요합니다."
+    firebase login || error "Firebase 로그인 실패"
 fi
+success "Firebase 인증 완료"
 
-# gcloud CLI 확인
-if ! command -v gcloud &> /dev/null; then
-    error "Google Cloud SDK가 설치되어 있지 않습니다"
-fi
-
-# 로그인 상태 확인
+# 2. gcloud 인증 확인
+echo ""
+echo "📝 Google Cloud 인증 확인 중..."
 if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" &> /dev/null; then
-    error "gcloud 로그인이 필요합니다: gcloud auth login"
+    warning "Google Cloud 로그인이 필요합니다."
+    gcloud auth login || error "Google Cloud 로그인 실패"
 fi
+success "Google Cloud 인증 완료"
 
-success "사전 검증 완료"
-
-# 2. 환경 변수 설정
+# 3. 프로젝트 설정
 echo ""
-echo "🔧 환경 변수 설정 중..."
+echo "🔧 프로젝트 설정 중..."
+gcloud config set project $PROJECT_ID
+firebase use $PROJECT_ID
+success "프로젝트 설정 완료"
 
-# Cloud Run 서비스 이름
-DASHBOARD_SERVICE="money-flow-dashboard"
-REGION="us-central1"
-
-success "환경 변수 설정 완료"
-
-# 3. Streamlit Dashboard를 Cloud Run에 배포
+# 4. Firestore 규칙 및 인덱스 배포
 echo ""
-echo "📦 Streamlit Dashboard를 Cloud Run에 배포 중..."
+echo "🗄️  Firestore 규칙 및 인덱스 배포 중..."
+firebase deploy --only firestore --project $PROJECT_ID || warning "Firestore 배포 실패 (계속 진행)"
+success "Firestore 배포 완료"
 
-# Docker 이미지 빌드 및 푸시
-IMAGE_NAME="gcr.io/$PROJECT_ID/$DASHBOARD_SERVICE"
-info "이미지 빌드: $IMAGE_NAME"
-
-docker build -t $IMAGE_NAME -f Dockerfile.streamlit . || error "Docker 이미지 빌드 실패"
-docker push $IMAGE_NAME || error "Docker 이미지 푸시 실패"
-
-# Cloud Run에 배포 (무료 티어 최적화)
-info "Cloud Run 배포 중..."
-gcloud run deploy $DASHBOARD_SERVICE \
-    --image $IMAGE_NAME \
-    --platform managed \
-    --region $REGION \
-    --allow-unauthenticated \
-    --min-instances 0 \
-    --max-instances 1 \
-    --memory 512Mi \
-    --cpu 1 \
-    --timeout 300 \
-    --project $PROJECT_ID \
-    || error "Cloud Run 배포 실패"
-
-# Cloud Run URL 가져오기
-DASHBOARD_URL=$(gcloud run services describe $DASHBOARD_SERVICE \
-    --platform managed \
-    --region $REGION \
-    --format 'value(status.url)' \
-    --project $PROJECT_ID)
-
-success "Dashboard 배포 완료: $DASHBOARD_URL"
-
-# 4. Firebase Hosting + Firestore 규칙 배포
+# 5. Firebase Hosting 배포
 echo ""
-echo "🔥 Firebase Hosting 및 Firestore 배포 중..."
-
-# firebase.json에서 Cloud Run URL 업데이트
-info "firebase.json 업데이트 중..."
-
-firebase deploy --only hosting,firestore || error "Firebase 배포 실패"
-
+echo "🌐 Firebase Hosting 배포 중..."
+firebase deploy --only hosting --project $PROJECT_ID || error "Hosting 배포 실패"
 success "Firebase Hosting 배포 완료"
 
-# 5. Firestore 인덱스 배포
+# 6. Cloud Run 배포 (선택사항)
 echo ""
-echo "🗂️  Firestore 인덱스 배포 중..."
-firebase deploy --only firestore:indexes || warning "Firestore 인덱스 배포 실패 (수동 생성 필요)"
+read -p "Cloud Run에 대시보드를 배포하시겠습니까? (y/n): " deploy_cloud_run
 
-# 6. 배포 완료 정보 출력
+if [ "$deploy_cloud_run" = "y" ]; then
+    echo ""
+    echo "☁️  Cloud Run 배포 중..."
+    
+    gcloud run deploy money-flow-dashboard \
+        --source . \
+        --platform managed \
+        --region us-central1 \
+        --allow-unauthenticated \
+        --min-instances 0 \
+        --max-instances 1 \
+        --memory 512Mi \
+        --cpu 1 \
+        --timeout 300 \
+        --set-env-vars ENVIRONMENT=production \
+        --project $PROJECT_ID || warning "Cloud Run 배포 실패"
+    
+    success "Cloud Run 배포 완료"
+    
+    # Cloud Run URL 가져오기
+    CLOUD_RUN_URL=$(gcloud run services describe money-flow-dashboard \
+        --platform managed \
+        --region us-central1 \
+        --format 'value(status.url)' \
+        --project $PROJECT_ID)
+fi
+
+# 배포 완료 메시지
 echo ""
 echo "============================================"
 success "🎉 배포가 완료되었습니다!"
 echo "============================================"
 echo ""
 echo "📍 배포된 서비스:"
-echo "  • Firebase Hosting: https://$PROJECT_ID.web.app"
-echo "  • Firebase Hosting: https://$PROJECT_ID.firebaseapp.com"
-echo "  • Dashboard (Cloud Run): $DASHBOARD_URL"
 echo ""
-echo "📊 무료 티어 사용량 모니터링:"
-echo "  • Firebase 콘솔: https://console.firebase.google.com/project/$PROJECT_ID"
-echo "  • Cloud Run 콘솔: https://console.cloud.google.com/run?project=$PROJECT_ID"
-echo "  • Firestore 콘솔: https://console.cloud.google.com/firestore?project=$PROJECT_ID"
+echo "  Firebase Hosting:"
+echo "    - https://$PROJECT_ID.web.app"
+echo "    - https://$PROJECT_ID.firebaseapp.com"
 echo ""
 
-# 7. 비용 최적화 팁
-info "💡 무료 티어 최적화 팁:"
-echo "  1. Cloud Run 최소 인스턴스: 0 (Cold Start 허용)"
-echo "  2. Firestore 쿼리 캐싱 활용"
-echo "  3. 데이터 수집 간격: 5-10분"
-echo "  4. Cloud Scheduler: 3개 작업까지 무료"
-echo ""
+if [ ! -z "$CLOUD_RUN_URL" ]; then
+    echo "  Cloud Run Dashboard:"
+    echo "    - $CLOUD_RUN_URL"
+    echo ""
+fi
 
-warning "중요: config/secrets.yaml의 API 키는 Google Secret Manager를 사용하세요"
-echo "  gcloud secrets create fred-api-key --data-file=- < config/secrets.yaml"
+echo "  Firebase Console:"
+echo "    - https://console.firebase.google.com/project/$PROJECT_ID"
 echo ""
+echo "============================================"

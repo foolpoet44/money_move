@@ -202,10 +202,12 @@ git push origin main
 - ✅ **보안 관리**: API 키를 GitHub Secrets로 안전하게 보관
 
 > **📖 설정 가이드:**
-> - [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md) - GitHub Actions 설정 단계별 가이드
-> - Firebase 서비스 계정 생성 방법
+> - [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - **GitHub Actions 배포 완전 가이드** (권장)
+> - [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md) - GitHub Actions 워크플로우 상세 설명
+> - [FIREBASE_SETUP.md](FIREBASE_SETUP.md) - Firebase 프로젝트 초기 설정
+> - Firebase 서비스 계정 생성 및 권한 설정
 > - GitHub Secrets 설정 방법
-> - 배포 워크플로우 사용법
+> - 배포 워크플로우 사용법 및 문제 해결
 
 ---
 

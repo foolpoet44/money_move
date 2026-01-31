@@ -94,7 +94,7 @@ jobs:
             --memory 512Mi \
             --cpu 1 \
             --timeout 300 \
-            --set-env-vars ENVIRONMENT=production \
+            --set-env-vars ENVIRONMENT=production,FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }} \
             --project ${{ env.FIREBASE_PROJECT_ID }}
 
       - name: Get deployment URLs
