@@ -80,6 +80,13 @@ jobs:
           echo "Deploying to Firebase Hosting..."
           firebase deploy --only hosting --project ${{ env.FIREBASE_PROJECT_ID }}
 
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: public
+          branch: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and deploy to Cloud Run (Dashboard)
         if: success()
         run: |
@@ -116,16 +123,41 @@ jobs:
       - name: Deploy summary
         if: success()
         run: |
-          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "# 💰 Money Flow Prediction System" >> $GITHUB_STEP_SUMMARY
+          echo "> **\"물의 흐름을 읽는 자가 시장을 지배한다\"**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Status**: Successful" >> $GITHUB_STEP_SUMMARY
-          echo "📅 **Date**: $(date)" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "실시간 글로벌 자금 흐름을 추적하고 AI 기반 예측으로 시장의 다음 움직임을 포착하는 통합 금융 분석 플랫폼입니다." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Deployed Services:" >> $GITHUB_STEP_SUMMARY
-          echo "- Firebase Hosting: https://${{ env.FIREBASE_PROJECT_ID }}.web.app" >> $GITHUB_STEP_SUMMARY
-          echo "- Firestore: Rules and indexes updated" >> $GITHUB_STEP_SUMMARY
-          echo "- Cloud Run: Dashboard service deployed" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 배포 성공 (Deployment Successful!)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📍 바로가기 (Direct Links)" >> $GITHUB_STEP_SUMMARY
+          echo "- [📊 **대시보드 열기 (Open Dashboard)**](https://${{ env.FIREBASE_PROJECT_ID }}.web.app/dashboard)" >> $GITHUB_STEP_SUMMARY
+          echo "- [🌐 **랜딩 페이지 (Landing Page)**](https://${{ env.FIREBASE_PROJECT_ID }}.web.app)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✨ 주요 기능 (Key Features)" >> $GITHUB_STEP_SUMMARY
+          echo "| 기능 | 상세 설명 |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📈 **실시간 데이터** | 채권, 통화, ETF 자금 흐름 추적 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🤖 **AI 예측** | LSTM/Transformer 기반 예측 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔔 **스마트 알림** | 이상 징후 실시간 감지 및 전송 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📊 **대시보드** | Plotly 기반 인터랙티브 시각화 |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🛠️ 배포 정보 (Deployment Info)" >> $GITHUB_STEP_SUMMARY
+          echo "- **상태**: ✅ 성공" >> $GITHUB_STEP_SUMMARY
+          echo "- **일시**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **커밋**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **환경**: \`${{ github.event.inputs.environment || 'production' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 배포된 서비스" >> $GITHUB_STEP_SUMMARY
+          echo "- **GitHub Pages**: 프로젝트 랜딩 페이지 (GitHub 호스팅)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Firebase Hosting**: 정적 파일 및 랜딩 페이지" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cloud Run**: Streamlit 분석 대시보드" >> $GITHUB_STEP_SUMMARY
+          echo "- **Firestore**: 데이터베이스 규칙 및 인덱스" >> $GITHUB_STEP_SUMMARY
 
       - name: Notify on failure
         if: failure()
